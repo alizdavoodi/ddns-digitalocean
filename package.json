@@ -1,0 +1,17 @@
+{
+  "name": "ddns-digitalocean",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "alireza davoodi",
+  "license": "ISC",
+  "devDependencies": {
+    "chai": "^3.5.0"
+  },
+  "dependencies": {
+    "external-ip": "^0.2.4"
+  }
+}
