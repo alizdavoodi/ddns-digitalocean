@@ -19,21 +19,16 @@ suite('aware of domain and records', function () {
   });
 
   test('check if domain exists', function (done) {
-    return ddnsFixture.getAllRecords()
+    return ddnsFixture.checkIfDomainExists()
       .then(function (totalDomains) {
-        const expected = ddnsFixture.domain;
-        const reality = totalDomains.domains;
-
-        //If does not return 404 means domains valid and exists
-        assert.notEqual(allDomains, 404);
-        assert.isOk(_.some(reality, { name: expected }));
+        assert.isOk(totalDomains);
         done();
       }).catch(function (e) {
         done(e);
       });
   });
 
-  test('Check if given record exists', function (done) {
+  test('check if record exists', function (done) {
     return ddns.recordExists()
       .then(function (exists) {
         assert.isOk(exists);
