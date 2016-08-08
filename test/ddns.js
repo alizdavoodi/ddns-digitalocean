@@ -3,7 +3,6 @@
 const chai = require('chai');
 const assert = chai.assert;
 const ddns = require('../lib/ddns');
-const config = require('../config/config.json');
 const _ = require('lodash');
 const sinon = require('sinon');
 const nock = require('nock');
@@ -72,15 +71,16 @@ const apiObjReturn = {
   }
 };
 
-suite('check existense domain and records', function() {
+suite('check existence domain and records', function() {
   let ddnsFixture;
 
   setup(function() {
     //Return factory function
     ddnsFixture = ddns({
-      apiKey: config.apiKey,
-      domain: config.domain,
-      record: config.record
+      apiKey: 'SECRET',
+      domain: 'example.com',
+      record: 'example',
+      ip: '127.0.0.1'
     });
   });
 
@@ -122,7 +122,7 @@ suite('check existense domain and records', function() {
       .get('/domains/example.com/records')
       .reply(200, apiObjReturn);
 
-    ddnsFixture.recordExists('example.com', '127.0.0.1', 'A', 'example')
+    ddnsFixture.recordExists()
       .then(function(exists) {
         assert.isOk(exists);
         done();
@@ -132,12 +132,13 @@ suite('check existense domain and records', function() {
   });
 
   test('check if record does not exists in returned object', function(done) {
+    ddnsFixture.record = 'test';
     //Mock request
     nock(baseUrl)
       .get('/domains/example.com/records')
       .reply(200, apiObjReturn);
 
-    ddnsFixture.recordExists('example.com', '127.0.0.1', 'A', 'test')
+    ddnsFixture.recordExists()
       .then(function(exists) {
         assert.isNotOk(exists);
         done();
@@ -152,9 +153,10 @@ suite('create domain or records if not exists', function() {
   setup(function() {
     //Return factory function
     ddnsFixture = ddns({
-      apiKey: config.apiKey,
-      domain: config.domain,
-      record: config.record
+      apiKey: 'SECRET',
+      domain: 'example.com',
+      record: 'example',
+      ip: '127.0.0.1',
     });
   });
 
@@ -163,7 +165,7 @@ suite('create domain or records if not exists', function() {
       .get('/domains/example.com')
       .reply(200);
 
-    ddnsFixture.createDomain('example.com', '127.0.0.1')
+    ddnsFixture.createDomain()
       .then(function(result) {
         assert.deepEqual(result, {
           exists: 1
@@ -180,7 +182,10 @@ suite('create domain or records if not exists', function() {
       .reply(404);
 
     nock(baseUrl)
-      .post('/domains')
+      .post('/domains', {
+        name: 'example.com',
+        ip_address: '127.0.0.1'
+      })
       .reply(200, {
         'domain': {
           'name': 'example.com',
@@ -189,7 +194,7 @@ suite('create domain or records if not exists', function() {
         }
       });
 
-    ddnsFixture.createDomain('example.com', '127.0.0.1')
+    ddnsFixture.createDomain()
       .then(function(result) {
         assert.deepEqual(JSON.parse(result), {
           'domain': {
@@ -203,4 +208,85 @@ suite('create domain or records if not exists', function() {
       done(e);
     });
   });
+
+  test('record exists and skip create it', function(done) {
+
+    nock(baseUrl)
+      .get('/domains/example.com/records')
+      .reply(200, apiObjReturn);
+
+    ddnsFixture.createDomainRecord().then((result) => {
+      assert.deepEqual(result, {
+        exists: 1,
+      });
+    }).catch((e) => {
+      done(e);
+    });
+  });
+
+  test('record does not exists and create it', function(done) {
+    ddnsFixture.record = 'test';
+    nock(baseUrl)
+      .get('/domains/example.com/records')
+      .reply(200, apiObjReturn);
+
+    nock(baseUrl)
+      .post('/domains/example.com/records')
+      .reply(200, {
+      'domain_record': {
+        'id': 3352896,
+        'type': 'A',
+        'name': 'download',
+        'data': '127.0.0.1',
+        'priority': null,
+        'port': null,
+        'weight': null
+      }
+    });
+
+    ddnsFixture.createDomainRecord().then((result) => {
+      assert.deepEqual(result, {
+        exists: 0,
+        domain_record: {
+          'id': 3352896,
+          'type': 'A',
+          'name': 'download',
+          'data': '127.0.0.1',
+          'priority': null,
+          'port': null,
+          'weight': null
+        }
+      });
+    }).catch((e) => {
+      done(e);
+    });
+  });
+});
+
+suite('check if local host global ip changed, update dns with newer ip', function() {
+  let ddnsFixture;
+  setup(function() {
+    ddnsFixture = ddns({
+      apiKey: 'SECRET',
+      domain: 'example.com',
+      record: 'download',
+      ip: '127.0.0.1',
+    });
+  });
+
+  test('get local global ip', function(done) {
+    const checkIpReg = /^(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/;
+    ddnsFixture.getIp().then((ip) => {
+      //Assert ip address with match assertion
+      assert.match(ip, checkIpReg);
+      done();
+    }).catch((e) => {
+      done(e);
+    });
+  });
+
+  test('if local machine ip changed, update digital ocean dns with new ip address', function(done) {
+    done();
+  });
+
 });
