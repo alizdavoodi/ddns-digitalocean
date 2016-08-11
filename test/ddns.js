@@ -217,8 +217,9 @@ suite('create domain or records if not exists', function() {
 
     ddnsFixture.createDomainRecord().then((result) => {
       assert.deepEqual(result, {
-        exists: 1,
+        exists: 1
       });
+      done();
     }).catch((e) => {
       done(e);
     });
@@ -234,13 +235,13 @@ suite('create domain or records if not exists', function() {
       .post('/domains/example.com/records')
       .reply(200, {
       'domain_record': {
-        'id': 3352896,
-        'type': 'A',
-        'name': 'download',
-        'data': '127.0.0.1',
-        'priority': null,
-        'port': null,
-        'weight': null
+        id: 3352896,
+        type: 'A',
+        name: 'download',
+        data: '127.0.0.1',
+        priority: null,
+        port: null,
+        weight: null
       }
     });
 
@@ -257,6 +258,7 @@ suite('create domain or records if not exists', function() {
           'weight': null
         }
       });
+      done();
     }).catch((e) => {
       done(e);
     });
@@ -286,7 +288,12 @@ suite('check if local host global ip changed, update dns with newer ip', functio
   });
 
   test('if local machine ip changed, update digital ocean dns with new ip address', function(done) {
-    done();
+    ddnsFixture.isIpChanged().then((status) => {
+      assert.isOk(status);
+      done();
+    }).catch((e) => {
+      done(e);
+    });
   });
 
 });
