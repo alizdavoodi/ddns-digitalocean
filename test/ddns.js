@@ -263,27 +263,39 @@ suite('create domain or records if not exists', function() {
       done(e);
     });
   });
-});
 
-suite('check if local host global ip changed, update dns with newer ip', function() {
-  let ddnsFixture;
-  setup(function() {
-    ddnsFixture = ddns({
-      apiKey: 'SECRET',
-      domain: 'example.com',
-      record: 'download',
-      ip: '127.0.0.1',
-    });
+  test('Update records', function(done) {
+    nock(baseUrl)
+      .put('/domains/example.com/records/12345')
+      .reply(200, {
+        'domain_record': {
+          id: 12345,
+          type: 'A',
+          name: '@',
+          data: '127.0.0.1',
+          priority: null,
+          port: null,
+          weight: null
+        }
+      });
+
+    ddnsFixture.updateDomainRecord('12345')
+      .then((response) => {
+        assert.deepEqual(response, {
+          'domain_record': {
+            id: 12345,
+            type: 'A',
+            name: '@',
+            data: '127.0.0.1',
+            priority: null,
+            port: null,
+            weight: null
+          }
+        });
+        done();
+      }).catch((e) => {
+        done(e);
+      });
   });
 
-  test('get local global ip', function(done) {
-    const checkIpReg = /^(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/;
-    ddnsFixture.getIp().then((ip) => {
-      //Assert ip address with match assertion
-      assert.match(ip, checkIpReg);
-      done();
-    }).catch((e) => {
-      done(e);
-    });
-  });
 });
