@@ -286,14 +286,4 @@ suite('check if local host global ip changed, update dns with newer ip', functio
       done(e);
     });
   });
-
-  test('if local machine ip changed, update digital ocean dns with new ip address', function(done) {
-    ddnsFixture.isIpChanged().then((status) => {
-      assert.isOk(status);
-      done();
-    }).catch((e) => {
-      done(e);
-    });
-  });
-
 });
