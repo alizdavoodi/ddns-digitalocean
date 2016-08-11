@@ -1,0 +1,15 @@
+image: node:4
+
+before_script:
+  - npm install
+
+stages:
+  - test
+  - deploy
+
+Test:
+  stage: test
+  script:
+    - npm install -g mocha
+    - npm test
+
