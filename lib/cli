@@ -1,0 +1,65 @@
+#!/usr/bin/env node
+'use strict';
+
+const ddns = require('./ddns');
+const ipState = require('./ip-state');
+const program = require('commander');
+const schedule = require('node-schedule');
+let globalIp;
+
+const rule = new schedule.RecurrenceRule();
+rule.second = new schedule.Range(0, 59, 10);
+
+
+program
+  .version('1.0.0')
+  .command('init <apiKey> <domain>')
+  .option('-r, --record <record>', 'ddns apply on record of domain. Default @')
+  .option('-t, --type <type>', 'type of domain record. Default A')
+  .option('-i, --immediately', 'This option make ddns start and update immediately')
+  .action(function (apiKey, domain, options) {
+    const ddnsObj = ddns({
+      domain: domain,
+      record: options.record,
+      apiKey: apiKey,
+      ip: globalIp,
+      type: options.type
+    });
+
+    schedule.scheduleJob(rule, function () {
+      return ipState.getGlobalIp().then(function (ip) {
+        if (ip !== globalIp) {
+          ddnsObj.ip = ip;
+          return ddnsObj.createDomain()
+            .then(function (response) {
+              if (response.exists) {
+                console.log('domain exists...');
+              } else {
+                console.log('domain does not exists and we create it.');
+              }
+
+              return ddnsObj.createDomainRecord();
+            }).then(function (response) {
+              if (response.exists) {
+                console.log('domain record exists...');
+              } else {
+                console.log('domain record does not exists and we create it.');
+              }
+
+              return ddnsObj.updateDomainRecord(response.id);
+            }).then(function (response) {
+              console.log('record updated', response);
+              globalIp = ip;
+            }).catch((e) => {
+              console.error(e.stack);
+            });
+        } else {
+          console.log('Global ip address does not changed');
+        }
+      }).catch((e) => {
+        console.error(e);
+      });
+    });
+  });
+program.parse(process.argv);
+

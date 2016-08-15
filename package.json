@@ -16,8 +16,10 @@
   "dependencies": {
     "bluebird": "^3.4.1",
     "chai": "^3.5.0",
+    "commander": "^2.9.0",
     "external-ip": "^0.2.4",
     "lodash": "^4.14.0",
+    "node-schedule": "^1.1.1",
     "request": "^2.74.0",
     "request-promise": "^4.0.2",
     "sinon": "^1.17.5"
